@@ -1,0 +1,345 @@
+# config/hedge_config.yaml
+# AlphaEdge V13.0.5 – Hedging & Risk Configuration File
+# Created: July 7, 2026
+
+# ============================================
+# HEDGE OVERVIEW
+# ============================================
+hedge:
+  description: "Dynamic hedging and risk management configuration"
+  enabled: true
+  update_frequency: "Real-time (per block)"
+
+# ============================================
+# RISK PARAMETERS
+# ============================================
+risk_parameters:
+  max_drawdown_daily: 0.10  # 10% max daily drawdown
+  max_drawdown_weekly: 0.15  # 15% max weekly drawdown
+  max_drawdown_total: 0.25  # 25% max total drawdown
+  
+  max_position_size: 0.06  # 6% max per position
+  max_correlation: 0.85  # 85% max correlation between positions
+  
+  max_leverage: 1.0  # No leverage (1x only)
+  min_collateral_ratio: 1.5  # 150% minimum collateral
+
+# ============================================
+# STOP LOSS CONFIGURATION
+# ============================================
+stop_loss:
+  enabled: true
+  
+  types:
+    - "Fixed percentage"
+    - "Trailing stop"
+    - "ATR-based"
+    - "Volatility-based"
+    
+  fixed_percentage:
+    micro_cap: 0.04  # 4%
+    small_cap: 0.05  # 5%
+    mid_cap: 0.07  # 7%
+    large_cap: 0.08  # 8%
+    
+  trailing_stop:
+    micro_cap: 0.03  # 3-4%
+    small_cap: 0.04  # 4-5%
+    mid_cap: 0.06  # 6-7%
+    large_cap: 0.08  # 8%
+    
+    activation: "After price moves +5% from entry"
+    trailing_by: "0.5% (incremental)"
+    
+  atr_stop:
+    multiplier: 2.0
+    period: 14  # ATR period
+
+# ============================================
+# TAKE PROFIT CONFIGURATION
+# ============================================
+take_profit:
+  enabled: true
+  
+  targets:
+    tier_1: 0.15  # +15%
+    tier_2: 0.25  # +25%
+    tier_3: 0.50  # +50%
+    tier_4: 1.00  # +100%
+    
+  partial_take_profit:
+    tier_1: 0.25  # Take 25% at first target
+    tier_2: 0.25  # Take 25% at second target
+    tier_3: 0.25  # Take 25% at third target
+    tier_4: 0.25  # Take 25% at final target
+    
+  trailing_take_profit:
+    enabled: true
+    trailing_percent: 0.05  # 5% trail
+
+# ============================================
+# POSITION SIZING
+# ============================================
+position_sizing:
+  enabled: true
+  strategy: "Dynamic capital allocation"
+  
+  base_sizing:
+    micro_cap: 0.02  # 2% of capital
+    small_cap: 0.03  # 3% of capital
+    mid_cap: 0.04  # 4% of capital
+    large_cap: 0.05  # 5% of capital
+    
+  pyramiding:
+    enabled: true
+    max_additions: 4
+    addition_1: 0.20  # +20%
+    addition_2: 0.50  # +50%
+    addition_3: 1.00  # +100%
+    addition_4: 2.00  # +200%
+    
+  dynamic_sizing:
+    by_regime:
+      bull: 1.5  # 1.5x normal size
+      neutral: 1.0  # Normal size
+      bear: 0.5  # 0.5x normal size
+      
+    by_confidence:
+      high: 1.2  # TPS >90
+      medium: 1.0  # TPS 82-90
+      low: 0.7  # TPS <82
+
+# ============================================
+# CORRELATION MANAGEMENT
+# ============================================
+correlation:
+  enabled: true
+  max_correlation: 0.85
+  
+  monitoring:
+    - "Pairwise correlation"
+    - "Sector correlation"
+    - "Market cap tier correlation"
+    
+  correlation_matrix:
+    update_frequency: "Daily"
+    lookback_period: 30  # days
+    
+  action_on_high_correlation:
+    - "Reduce overlapping positions"
+    - "Replace with uncorrelated assets"
+    - "Increase hedge ratio"
+
+# ============================================
+# VOLATILITY MANAGEMENT
+# ============================================
+volatility:
+  enabled: true
+  
+  volatility_metrics:
+    - "Historical volatility (30-day)"
+    - "Implied volatility"
+    - "Realized volatility"
+    
+  volatility_scaling:
+    high_volatility: 0.5  # Reduce size 50%
+    medium_volatility: 1.0  # Normal
+    low_volatility: 1.2  # Increase size 20%
+
+# ============================================
+# DRAWDOWN PROTECTION
+# ============================================
+drawdown_protection:
+  enabled: true
+  
+  circuit_breakers:
+    consecutive_losses: 3
+    daily_drawdown: 0.10  # 10%
+    weekly_drawdown: 0.15  # 15%
+    monthly_drawdown: 0.20  # 20%
+    
+  actions:
+    on_consecutive_losses: "Pause for 1 hour"
+    on_daily_drawdown: "Reduce size 50%"
+    on_weekly_drawdown: "Switch to stablecoins"
+    on_monthly_drawdown: "Emergency shutdown"
+
+# ============================================
+# DYNAMIC HEDGING
+# ============================================
+dynamic_hedging:
+  enabled: true
+  
+  hedge_assets:
+    - "USDC"  # Stablecoin hedge
+    - "USDT"  # Stablecoin hedge
+    - "PAXG"  # Gold hedge
+    - "XAUT"  # Gold hedge
+    
+  hedge_triggers:
+    - "High volatility (VIX >25)"
+    - "Market correction (>5%)"
+    - "FED tightening"
+    - "DXY rising >5%"
+    
+  hedge_allocation:
+    stablecoin_hedge: 0.10  # 10% in stablecoins
+    gold_hedge: 0.05  # 5% in gold
+    cash_hedge: 0.10  # 10% in cash
+
+# ============================================
+# VALUE AT RISK (VaR)
+# ============================================
+var:
+  enabled: true
+  
+  calculation:
+    method: "Historical simulation"
+    confidence_level: 0.95
+    lookback_days: 252
+    
+  thresholds:
+    var_1d: 0.05  # 5% VaR
+    var_1w: 0.10  # 10% VaR
+    var_1m: 0.15  # 15% VaR
+    
+  action_on_var_breach:
+    - "Reduce position sizes"
+    - "Add hedges"
+    - "Pause new entries"
+
+# ============================================
+# LIQUIDITY MANAGEMENT
+# ============================================
+liquidity:
+  enabled: true
+  
+  minimum_liquidity_per_trade: 100000  # $100K minimum
+  maximum_liquidity_usage: 0.10  # 10% of pool maximum
+  
+  liquidity_sources:
+    - "Jupiter (Solana)"
+    - "Raydium (Solana)"
+    - "Orca (Solana)"
+    - "Uniswap (Ethereum)"
+    - "PancakeSwap (BSC)"
+    - "Curve (Ethereum)"
+    
+  liquidity_monitoring:
+    check_interval_seconds: 30
+    alert_on_low_liquidity: true
+
+# ============================================
+# ORDER BOOK DEPTH
+# ============================================
+order_book_depth:
+  enabled: true
+  
+  minimum_depth:
+    micro_cap: 50000  # $50K
+    small_cap: 100000  # $100K
+    mid_cap: 200000  # $200K
+    large_cap: 500000  # $500K
+    
+  depth_check:
+    before_entry: true
+    before_exit: true
+    update_frequency: "Per block"
+
+# ============================================
+# BLACK SWAN PROTECTION
+# ============================================
+black_swan:
+  enabled: true
+  
+  triggers:
+    - "Price drop >20% in 1 hour"
+    - "Volume spike >500% normal"
+    - "Major exchange hack"
+    - "Regulatory ban"
+    - "Stablecoin depeg"
+    
+  actions:
+    - "Emergency liquidation"
+    - "Switch to stablecoins"
+    - "Move to cold storage"
+    - "Send alert"
+    
+  recovery:
+    auto_recovery: true
+    recovery_timeout: 3600  # 1 hour
+
+# ============================================
+# REGIME-BASED RISK
+# ============================================
+regime_risk:
+  enabled: true
+  
+  regimes:
+    - "BULL: Full risk (100%)"
+    - "ALT_SEASON: High risk (80%)"
+    - "ACCUMULATION: Medium risk (60%)"
+    - "BEAR: Low risk (40%)"
+    - "CRASH: No risk (0%)"
+    
+  risk_scaling:
+    bull: 1.0
+    alt_season: 0.8
+    accumulation: 0.6
+    bear: 0.4
+    crash: 0.0
+
+# ============================================
+# FED LIQUIDITY RISK
+# ============================================
+fed_liquidity_risk:
+  enabled: true
+  
+  fed_score_thresholds:
+    expansion: 80  # Fed score >80 = expansion
+    neutral: 40  # Fed score 40-79 = neutral
+    contraction: 20  # Fed score <20 = contraction
+    
+  risk_adjustment:
+    expansion: 1.2  # Increase risk 20%
+    neutral: 1.0  # Normal
+    contraction: 0.5  # Reduce risk 50%
+
+# ============================================
+# RISK REPORTING
+# ============================================
+risk_reporting:
+  enabled: true
+  update_frequency: "Daily"
+  
+  reports:
+    - "Daily risk summary"
+    - "Weekly risk report"
+    - "Monthly risk audit"
+    
+  metrics:
+    - "Portfolio VaR"
+    - "Maximum drawdown"
+    - "Sharpe ratio"
+    - "Win rate"
+    - "Risk-adjusted return"
+    
+  format: "JSON + PDF (human-readable)"
+
+# ============================================
+# RISK LOGGING
+# ============================================
+risk_logging:
+  enabled: true
+  retention_days: 365
+  
+  log_events:
+    - "risk_breach"
+    - "hedge_activated"
+    - "drawdown_triggered"
+    - "circuit_breaker_activated"
+    - "black_swan_activated"
+    - "regime_change"
+    - "var_breach"
+    
+  format: "JSON + SHA-256 tamper-proof"
