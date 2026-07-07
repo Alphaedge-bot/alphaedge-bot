@@ -1,0 +1,258 @@
+# config/gas_config.yaml
+# AlphaEdge V13.0.5 – Gas Configuration File
+# Created: July 7, 2026
+
+# ============================================
+# GAS TOKENS OVERVIEW
+# ============================================
+gas_tokens:
+  description: "Gas tokens for multi-chain execution"
+  update_frequency: "Dynamic (per transaction)"
+  
+  solana:
+    symbol: "SOL"
+    reserve_min: 0.5
+    reserve_recommended: 1.0
+    reserve_max: 2.0
+    cost_per_tx: "<$0.01"
+    chain: "Solana"
+    priority_fee: "dynamic"
+    auto_refill_threshold: 0.3
+    
+  ethereum:
+    symbol: "ETH"
+    reserve_min: 0.02
+    reserve_recommended: 0.05
+    reserve_max: 0.10
+    cost_per_tx: "$2-5"
+    chain: "Ethereum"
+    priority_fee: "dynamic"
+    auto_refill_threshold: 0.01
+    
+  bsc:
+    symbol: "BNB"
+    reserve_min: 0.5
+    reserve_recommended: 1.0
+    reserve_max: 2.0
+    cost_per_tx: "$0.10-0.50"
+    chain: "BSC"
+    priority_fee: "static"
+    auto_refill_threshold: 0.3
+
+# ============================================
+# GAS RESERVE MANAGEMENT
+# ============================================
+reserve_management:
+  enabled: true
+  check_interval_seconds: 60
+  auto_refill: true
+  
+  refill_source: "Wallet 1 (trading capital)"
+  refill_priority:
+    - "SOLANA: HIGH"
+    - "ETHEREUM: MEDIUM"
+    - "BSC: LOW"
+    
+  thresholds:
+    critical: 0.20  # 20% of reserve remaining
+    warning: 0.40   # 40% of reserve remaining
+    healthy: 0.60   # 60% of reserve remaining
+    optimal: 1.00   # 100% of reserve
+
+# ============================================
+# PRIORITY FEE CONFIGURATION
+# ============================================
+priority_fees:
+  solana:
+    strategy: "Jito Priority Fees"
+    base_fee: 0.000001  # 1 micro-SOL
+    max_fee: 0.0001     # 100 micro-SOL
+    adjustment: "Based on network congestion"
+    
+    levels:
+      low: 0.000001
+      medium: 0.000005
+      high: 0.00001
+      critical: 0.0001
+      
+  ethereum:
+    strategy: "Gas Oracle (EIP-1559)"
+    base_fee: "auto-detected"
+    max_fee: 50  # GWEI
+    priority_fee: "2 GWEI"
+    
+    levels:
+      low: 10   # GWEI
+      medium: 20
+      high: 35
+      critical: 50
+      
+  bsc:
+    strategy: "Static Fee"
+    base_fee: 5  # GWEI
+    max_fee: 10  # GWEI
+    
+    levels:
+      low: 3
+      medium: 5
+      high: 8
+      critical: 10
+
+# ============================================
+# GAS OPTIMIZATION
+# ============================================
+optimization:
+  enabled: true
+  
+  strategies:
+    - "Batch transactions where possible"
+    - "Use compute unit (CU) estimation"
+    - "Avoid unnecessary writes"
+    - "Compact signatures"
+    - "Use versioned transactions"
+    
+  cu_estimation:
+    solana: "Dynamic CU estimation"
+    ethereum: "Gas estimation via eth_estimateGas"
+    bsc: "Gas estimation via bsc_estimateGas"
+    
+  fallback:
+    on_high_gas: "Wait for lower gas (max 5 minutes)"
+    on_timeout: "Retry with higher gas"
+    max_retries: 3
+
+# ============================================
+# GAS MONITORING
+# ============================================
+monitoring:
+  enabled: true
+  check_interval_seconds: 30
+  
+  metrics:
+    - "Current gas price (per chain)"
+    - "Reserve levels (per token)"
+    - "Daily gas spend"
+    - "Average cost per transaction"
+    
+  alerts:
+    on_critical_reserve: "Send alert via Telegram"
+    on_high_gas_spike: "Pause non-critical transactions"
+    on_gas_exhaustion: "Emergency refill from Wallet 1"
+
+# ============================================
+# GAS SPEND LIMITS
+# ============================================
+spend_limits:
+  daily:
+    solana: 0.05  # SOL per day
+    ethereum: 0.01  # ETH per day
+    bsc: 0.1  # BNB per day
+    
+  monthly:
+    solana: 1.0
+    ethereum: 0.2
+    bsc: 2.0
+    
+  emergency:
+    solana: 0.5
+    ethereum: 0.05
+    bsc: 0.5
+
+# ============================================
+# WALLET GAS ALLOCATION
+# ============================================
+wallet_gas_allocation:
+  wallet_1_trading:
+    purpose: "Trading gas"
+    allocation:
+      solana: 0.3
+      ethereum: 0.02
+      bsc: 0.2
+      
+  wallet_2_operations:
+    purpose: "Operations gas"
+    allocation:
+      solana: 0.7
+      ethereum: 0.03
+      bsc: 0.8
+      
+  total_reserve:
+    solana: 1.0
+    ethereum: 0.05
+    bsc: 1.0
+
+# ============================================
+# AUTO-REFILL CONFIGURATION
+# ============================================
+auto_refill:
+  enabled: true
+  
+  triggers:
+    solana:
+      threshold: 0.3  # SOL
+      refill_amount: 0.5
+      max_refill_per_day: 1.0
+      
+    ethereum:
+      threshold: 0.01  # ETH
+      refill_amount: 0.02
+      max_refill_per_day: 0.05
+      
+    bsc:
+      threshold: 0.3  # BNB
+      refill_amount: 0.5
+      max_refill_per_day: 1.0
+      
+  cooldown_minutes: 10
+
+# ============================================
+# GAS PRICE HISTORY (REFERENCE)
+# ============================================
+gas_price_history:
+  solana:
+    average_24h: 0.000005
+    average_7d: 0.000005
+    average_30d: 0.000005
+    
+  ethereum:
+    average_24h: 20  # GWEI
+    average_7d: 25
+    average_30d: 30
+    
+  bsc:
+    average_24h: 5  # GWEI
+    average_7d: 5
+    average_30d: 5
+
+# ============================================
+# EMERGENCY GAS PROTOCOL
+# ============================================
+emergency_protocol:
+  enabled: true
+  
+  conditions:
+    - "Any gas reserve below 0.1 token"
+    - "Gas price spike >5x normal"
+    - "Network congestion >80%"
+    
+  actions:
+    - "Pause all non-essential transactions"
+    - "Increase priority fees for critical txs"
+    - "Send emergency alert"
+    - "Attempt manual refill"
+
+# ============================================
+# GAS LOGGING
+# ============================================
+logging:
+  enabled: true
+  retention_days: 30
+  
+  log_events:
+    - "gas_refill"
+    - "gas_spend"
+    - "gas_threshold_warning"
+    - "gas_threshold_critical"
+    - "emergency_protocol_triggered"
+    
+  format: "JSON + SHA-256 tamper-proof"
