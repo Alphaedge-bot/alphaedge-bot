@@ -1,0 +1,330 @@
+# config/rpc_config.yaml
+# AlphaEdge V13.0.5 – RPC Configuration File
+# Created: July 7, 2026
+
+# ============================================
+# RPC OVERVIEW
+# ============================================
+rpc:
+  description: "Multi-chain RPC endpoints for execution and reads"
+  region: "MALAYSIA HOME OFFICE OPTIMIZED"
+  
+  primary_chain: "Solana"
+  backup_chains:
+    - "Ethereum"
+    - "BSC"
+    - "Arbitrum"
+    - "Base"
+
+# ============================================
+# SOLANA RPC ENDPOINTS
+# ============================================
+solana:
+  description: "Solana RPC endpoints"
+  
+  # PRIMARY – Execution
+  jito:
+    name: "Jito Singapore"
+    url: "https://mainnet.block-engine.jito.network/"
+    purpose: "EXECUTION"
+    priority: 1
+    type: "Private"
+    latency: "<50ms"
+    rate_limit: "Unlimited"
+    mev_protection: true
+    features:
+      - "Jito MEV protection"
+      - "Priority fee bidding"
+      - "Bundle submission"
+      - "Leader schedule awareness"
+    
+  # SECONDARY – Reads
+  helius:
+    name: "Helius Singapore"
+    url: "https://rpc.helius.xyz/"
+    purpose: "READS"
+    priority: 2
+    type: "Private"
+    latency: "<50ms"
+    rate_limit: "1000 requests/min"
+    features:
+      - "WebSocket support"
+      - "Enhanced APIs"
+      - "Geyser plugin"
+      - "Historical data"
+    
+  # FALLBACK 1 – Free Tier
+  helius_free:
+    name: "Helius Free"
+    url: "https://rpc.helius.xyz/free"
+    purpose: "FALLBACK"
+    priority: 3
+    type: "Public"
+    latency: "<100ms"
+    rate_limit: "100 requests/min"
+    
+  # FALLBACK 2 – Public
+  public_solana:
+    name: "Public Solana"
+    url: "https://api.mainnet-beta.solana.com"
+    purpose: "EMERGENCY"
+    priority: 4
+    type: "Public"
+    latency: "<200ms"
+    rate_limit: "50 requests/min"
+
+# ============================================
+# ETHEREUM RPC ENDPOINTS
+# ============================================
+ethereum:
+  description: "Ethereum RPC endpoints"
+  
+  # PRIMARY
+  infura:
+    name: "Infura"
+    url: "https://mainnet.infura.io/v3/YOUR_API_KEY"
+    purpose: "EXECUTION + READS"
+    priority: 1
+    type: "Private"
+    latency: "<100ms"
+    rate_limit: "1000 requests/day"
+    
+  # SECONDARY
+  alchemy:
+    name: "Alchemy"
+    url: "https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY"
+    purpose: "READS"
+    priority: 2
+    type: "Private"
+    latency: "<100ms"
+    rate_limit: "1000 requests/day"
+    
+  # FALLBACK
+  public_ethereum:
+    name: "Public Ethereum"
+    url: "https://cloudflare-eth.com"
+    purpose: "EMERGENCY"
+    priority: 3
+    type: "Public"
+    latency: "<200ms"
+    rate_limit: "50 requests/min"
+
+# ============================================
+# BSC RPC ENDPOINTS
+# ============================================
+bsc:
+  description: "Binance Smart Chain RPC endpoints"
+  
+  # PRIMARY
+  binance:
+    name: "Binance RPC"
+    url: "https://bsc-dataseed.binance.org/"
+    purpose: "EXECUTION + READS"
+    priority: 1
+    type: "Public"
+    latency: "<50ms"
+    rate_limit: "Unlimited"
+    
+  # SECONDARY
+  binance_backup:
+    name: "Binance Backup"
+    url: "https://bsc-dataseed1.binance.org/"
+    purpose: "READS"
+    priority: 2
+    type: "Public"
+    latency: "<50ms"
+    rate_limit: "Unlimited"
+    
+  # FALLBACK
+  public_bsc:
+    name: "Public BSC"
+    url: "https://bsc-dataseed.binance.org/"
+    purpose: "EMERGENCY"
+    priority: 3
+    type: "Public"
+    latency: "<100ms"
+    rate_limit: "Unlimited"
+
+# ============================================
+# ARBITRUM RPC ENDPOINTS
+# ============================================
+arbitrum:
+  description: "Arbitrum RPC endpoints"
+  
+  # PRIMARY
+  arbitrum_main:
+    name: "Arbitrum Main"
+    url: "https://arb1.arbitrum.io/rpc"
+    purpose: "EXECUTION + READS"
+    priority: 1
+    type: "Public"
+    latency: "<100ms"
+    
+  # SECONDARY
+  alchemy_arbitrum:
+    name: "Alchemy Arbitrum"
+    url: "https://arb-mainnet.g.alchemy.com/v2/YOUR_API_KEY"
+    purpose: "READS"
+    priority: 2
+    type: "Private"
+
+# ============================================
+# BASE RPC ENDPOINTS
+# ============================================
+base:
+  description: "Base RPC endpoints"
+  
+  # PRIMARY
+  base_main:
+    name: "Base Main"
+    url: "https://mainnet.base.org"
+    purpose: "EXECUTION + READS"
+    priority: 1
+    type: "Public"
+    latency: "<100ms"
+
+# ============================================
+# RPC FAILOVER CONFIGURATION
+# ============================================
+failover:
+  enabled: true
+  check_interval_seconds: 30
+  health_check_timeout: 5  # seconds
+  
+  strategy: "Priority-based failover"
+  fallback_order:
+    solana:
+      - "jito"
+      - "helius"
+      - "helius_free"
+      - "public_solana"
+      
+    ethereum:
+      - "infura"
+      - "alchemy"
+      - "public_ethereum"
+      
+    bsc:
+      - "binance"
+      - "binance_backup"
+      - "public_bsc"
+      
+  conditions:
+    - "RPC latency >5s"
+    - "RPC error rate >10%"
+    - "Rate limit exceeded"
+    - "Connection timeout"
+
+# ============================================
+# RPC MONITORING
+# ============================================
+monitoring:
+  enabled: true
+  check_interval_seconds: 60
+  
+  metrics:
+    - "Latency (p50, p95, p99)"
+    - "Error rate"
+    - "Requests per minute"
+    - "Success rate"
+    - "Uptime"
+    
+  alerts:
+    on_latency_spike: "Switch RPC"
+    on_error_spike: "Switch RPC"
+    on_rate_limit: "Switch RPC"
+
+# ============================================
+# WEBSOCKET CONFIGURATION
+# ============================================
+websocket:
+  enabled: true
+  
+  endpoints:
+    solana:
+      - "wss://api.mainnet-beta.solana.com"
+      - "wss://rpc.helius.xyz/"
+      
+    ethereum:
+      - "wss://mainnet.infura.io/ws/v3/YOUR_API_KEY"
+      
+  reconnect:
+    max_attempts: 5
+    delay_seconds: 2
+
+# ============================================
+# RPC OPTIMIZATION
+# ============================================
+optimization:
+  enabled: true
+  
+  strategies:
+    - "Connection pooling"
+    - "Request batching"
+    - "Response caching"
+    - "Parallel requests"
+    
+  connection_pool:
+    max_connections: 100
+    min_connections: 10
+    idle_timeout_seconds: 60
+    
+  caching:
+    enabled: true
+    ttl_seconds: 5
+    max_cache_size: 1000
+
+# ============================================
+# RPC SECURITY
+# ============================================
+security:
+  enabled: true
+  
+  api_keys:
+    infura: "YOUR_API_KEY"
+    alchemy: "YOUR_API_KEY"
+    helius: "YOUR_API_KEY"
+    
+  encryption:
+    method: "TLS 1.3"
+    certificate_validation: true
+    
+  rate_limiting:
+    enabled: true
+    default_limit: 100  # requests per minute
+
+# ============================================
+# RPC LOGGING
+# ============================================
+logging:
+  enabled: true
+  retention_days: 14
+  
+  log_events:
+    - "rpc_connection"
+    - "rpc_failover"
+    - "rpc_error"
+    - "rpc_rate_limit"
+    - "rpc_restored"
+    
+  format: "JSON + SHA-256 tamper-proof"
+
+# ============================================
+# RPC STATUS REPORT
+# ============================================
+status:
+  description: "Current RPC status summary"
+  
+  solana:
+    primary: "Jito Singapore (✅ ONLINE)"
+    secondary: "Helius Singapore (✅ ONLINE)"
+    fallback: "Helius Free (⏳ STANDBY)"
+    
+  ethereum:
+    primary: "Infura (✅ ONLINE)"
+    secondary: "Alchemy (✅ ONLINE)"
+    fallback: "Public Ethereum (⏳ STANDBY)"
+    
+  bsc:
+    primary: "Binance RPC (✅ ONLINE)"
+    secondary: "Binance Backup (✅ ONLINE)"
