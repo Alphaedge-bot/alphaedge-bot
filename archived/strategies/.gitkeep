@@ -1,0 +1,24 @@
+# Archived Strategies
+
+This folder contains strategies that have been retired from active use.
+
+## Archive Policy
+- Strategies with win rate <45% over 30 days
+- Strategies with negative P&L over 60 days
+- Strategies replaced by better versions
+
+## Archive Contents
+- Original code
+- Date archived
+- Reason for archiving
+- Replacement strategy (if applicable)
+- Performance metrics before archive
+
+## Format
+Each archived strategy should be saved as:
+`archived/strategies/[strategy_name]_v[X.X.X]_archived_[YYYY-MM-DD].py`
+
+## Change Log
+| Date | Strategy | Reason | Replacement |
+|------|----------|--------|-------------|
+| 2026-07-18 | S-042 | Win rate 42% | AI-Hybrid V2 |
