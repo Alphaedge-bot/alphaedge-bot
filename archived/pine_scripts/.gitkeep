@@ -1,0 +1,22 @@
+# Archived Pine Scripts
+
+This folder contains deprecated TradingView Pine Script versions.
+
+## Archive Policy
+- Older versions replaced by newer updates
+- Scripts no longer in use
+
+## Archive Contents
+- Original Pine Script code
+- Date archived
+- Reason for archiving
+- Current version
+
+## Format
+Each archived script should be saved as:
+`archived/pine_scripts/[script_name]_v[X.X.X]_archived_[YYYY-MM-DD].pine`
+
+## Change Log
+| Date | Script | Version | Current |
+|------|--------|---------|---------|
+| 2026-07-18 | ae_strategy | V13.0.6 | V13.0.7 |
