@@ -1,0 +1,470 @@
+//@version=5
+// ALPHAEDGE V13.0.7 – AE STRATEGY (FULL PRODUCTION)
+// All-in-One: Entry, SL, TP, Trailing Stop, Signals, TPS Display
+// WITH TIMEFRAME TRANSPARENCY & TPS INTEGRATION
+// WITH ICT/SMC ZONE VISUALIZATION
+// WITH VOLUME PROFILE (Item 12)
+// Watermark: AlphaEdge AE Strategy v13.0.7
+// Author: AlphaEdge AI Strategist (Agent 16 + Agent 30)
+// Date: July 18, 2026
+
+strategy("AlphaEdge AE Strategy v13.0.7", overlay=true, 
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=4,
+     pyramiding=18,
+     commission_type=strategy.commission.percent,
+     commission_value=0.1)
+
+// ============================================
+// SECTION 1: USER INPUTS
+// ============================================
+
+// Market Cap Tier Selection
+tier = input.string("Small", "Market Cap Tier", 
+     options=["Micro", "Small", "Mid"])
+
+// Position Sizing (Tier-based)
+position_pct = tier == "Micro" ? 2 : tier == "Small" ? 4 : 5
+trailing_stop_pct = tier == "Micro" ? 3.5 : tier == "Small" ? 5.5 : 7.5
+
+// Profit Targets (Educational)
+tp1 = input.float(15, "Target 1 (%)", step=1, minval=5, maxval=50)
+tp2 = input.float(25, "Target 2 (%)", step=5, minval=10, maxval=100)
+tp3 = input.float(40, "Target 3 (%)", step=5, minval=20, maxval=200)
+
+// Stop Loss
+stop_loss_pct = input.float(8, "Stop Loss (%)", step=1, minval=3, maxval=20)
+
+// Lookback
+lookback = input.int(20, "Lookback Period", minval=10, maxval=50)
+
+// TPS Thresholds
+min_tps_entry = input.int(82, "Min TPS Entry", minval=70, maxval=90, step=1)
+max_tps_exit = input.int(68, "Max TPS Exit", minval=50, maxval=75, step=1)
+
+// Zone Display Toggle
+show_zones = input.bool(true, "Show ICT/SMC Zones", group="Zone Settings")
+
+// Volume Profile Toggle (Item 12)
+show_vp = input.bool(true, "Show Volume Profile", group="Volume Profile Settings")
+vp_bins = input.int(50, "VP Bins", minval=20, maxval=100, group="Volume Profile Settings")
+
+// ============================================
+// SECTION 2: DYNAMIC TIMEFRAMES
+// ============================================
+
+// Timeframe based on market cap tier
+tf = tier == "Micro" ? "15" : tier == "Small" ? "60" : "240"
+active_tf = tier == "Micro" ? "15M" : tier == "Small" ? "1H" : "4H"
+
+// ============================================
+// SECTION 3: CORE INDICATORS
+// ============================================
+
+// EMAs
+ema20 = ema(close, 20)
+ema50 = ema(close, 50)
+ema200 = ema(close, 200)
+
+// RSI (14)
+rsi_val = rsi(close, 14)
+
+// MACD
+[macd_line, signal_line, hist_line] = macd(close, 12, 26, 9)
+
+// ADX (Trend Strength)
+adx_val = adx(high, low, close, 14)
+
+// ATR (Volatility)
+atr_val = atr(14)
+
+// Volume
+volume_spike = volume > sma(volume, 20) * 1.5
+volume_avg = sma(volume, 20)
+
+// ============================================
+// SECTION 4: SUPPORT/RESISTANCE
+// ============================================
+
+// Swing Highs/Lows (Support/Resistance)
+pivot_high = pivothigh(high, 10, 10)
+pivot_low = pivotlow(low, 10, 10)
+
+resistance = valuewhen(pivot_high, high, 1)
+support = valuewhen(pivot_low, low, 1)
+
+// ============================================
+// SECTION 5: TICKER PERFORMANCE SCORE (TPS)
+// ============================================
+
+// TPS Calculation (0-100)
+tps_technical = (rsi_val >= 60 and rsi_val <= 75 ? 10 : 0) +
+                (macd_line > signal_line ? 10 : 0) +
+                (close > ema20 and ema20 > ema50 ? 10 : 0)
+
+tps_volume = (volume_spike ? 15 : 0) +
+             ((volume / ema(volume, 20) * 100) >= 20 ? 10 : 0)
+
+tps_momentum = (close > close[14] * 1.1 ? 10 : 0) +
+               (close > resistance and close[1] <= resistance ? 10 : 0)
+
+tps_macro = 10  // Placeholder for Fed liquidity + DXY
+
+tps_sentiment = 3  // Stage 1: 3 points max (free APIs only)
+
+tps_onchain = 5  // Placeholder for whale + exchange flows
+
+tps_robustness = (close > ema20 and close > ema50 and close > ema200 ? 3 : 0) +
+                 (adx_val > 25 ? 2 : 0)
+
+tps_score = tps_technical + tps_volume + tps_momentum + 
+            tps_macro + tps_sentiment + tps_onchain + tps_robustness
+
+tps_normalized = min(tps_score, 100)
+
+// ============================================
+// SECTION 6: ICT/SMC COMPONENTS
+// ============================================
+
+// Order Block Detection
+order_block = close > high[1] and close[1] <= high[1]
+
+// Fair Value Gap (FVG)
+fvg = high[2] < low[1]
+
+// Market Structure Shift (MSS)
+mss = close > high[1] and high > high[1]
+
+// Liquidity Sweep (Proxy)
+liquidity_sweep = low < low[5] and close > low[5]
+
+// ============================================
+// SECTION 6.5: ZONE DETECTION
+// ============================================
+
+// Imbalance Zone (Gap)
+gap_up = low[1] > high[2]
+gap_down = high[1] < low[2]
+
+// Stop-Pool Zone (Swing)
+swing_high = high > high[1] and high > high[2]
+swing_low = low < low[1] and low < low[2]
+
+// Zone Score (0-10)
+zone_size = (high - low) / atr_val
+zone_score = min(zone_size * 2, 10)
+elite_zone = zone_score >= 8.0
+
+// Nearest Supply/Demand
+nearest_supply = valuewhen(swing_high, high, 1)
+nearest_demand = valuewhen(swing_low, low, 1)
+
+// Zone Color
+zone_color = elite_zone ? color.yellow : zone_score >= 6.5 ? color.lime : color.gray
+zone_status = elite_zone ? "⭐ ELITE ZONE" : zone_score >= 6.5 ? "💪 STRONG" : "📍 ZONE"
+
+// ============================================
+// SECTION 6.6: VOLUME PROFILE (Item 12)
+// ============================================
+
+// Volume Profile calculation
+vp_high = highest(high, 100)
+vp_low = lowest(low, 100)
+vp_range = vp_high - vp_low
+
+// Calculate POC (Point of Control)
+vp_bin_size = vp_range / vp_bins
+vp_volume = array.new_float(vp_bins, 0)
+
+for i = 0 to vp_bins - 1
+    vp_level = vp_low + i * vp_bin_size
+    vp_next = vp_level + vp_bin_size
+    
+    for j = 0 to 100
+        if low[j] <= vp_next and high[j] >= vp_level
+            array.set(vp_volume, i, array.get(vp_volume, i) + volume[j])
+
+// Find POC
+poc_idx = 0
+poc_vol = 0
+for i = 0 to vp_bins - 1
+    if array.get(vp_volume, i) > poc_vol
+        poc_vol := array.get(vp_volume, i)
+        poc_idx := i
+
+poc_price = vp_low + poc_idx * vp_bin_size + vp_bin_size / 2
+
+// Value Area (70% of volume)
+total_vol = 0.0
+for i = 0 to vp_bins - 1
+    total_vol := total_vol + array.get(vp_volume, i)
+
+target_vol = total_vol * 0.70
+
+// Find VAH and VAL
+cum_vol = 0.0
+va_indices = array.new_int()
+
+for i = 0 to vp_bins - 1
+    if cum_vol < target_vol
+        cum_vol := cum_vol + array.get(vp_volume, i)
+        array.push(va_indices, i)
+
+va_high_idx = max(array.get(va_indices, array.size(va_indices) - 1))
+va_low_idx = min(array.get(va_indices, 0))
+
+vah_price = vp_low + va_high_idx * vp_bin_size + vp_bin_size / 2
+val_price = vp_low + va_low_idx * vp_bin_size + vp_bin_size / 2
+
+// ============================================
+// SECTION 7: PRICE ACTION (Auto PA)
+// ============================================
+
+// Breakout Confirmation
+breakout = close > resistance and close[1] <= resistance and volume_spike
+
+// Retest Confirmation (RBS)
+retest = low > support and close > support
+
+// Higher Highs / Higher Lows
+higher_high = high > high[1] and high[1] > high[2]
+higher_low = low > low[1] and low[1] > low[2]
+
+// Candle Patterns
+bullish_engulfing = close > open and close[1] < open[1] and close > open[1] and open < close[1]
+hammer = (high - low) > 2 * (close - open) and (close - low) > (high - close) * 2
+pin_bar = (high - low) > 2 * (close - open) and (high - close) > (close - low) * 2
+
+// ============================================
+// SECTION 8: AE ENTRY CONDITIONS
+// ============================================
+
+// ALL conditions must be met
+ae_buy = breakout and 
+         retest and 
+         (order_block or fvg or mss) and
+         (close > ema20 and close > ema50) and
+         volume_spike and
+         adx_val > 25 and
+         rsi_val >= 60 and rsi_val <= 75 and
+         (bullish_engulfing or hammer or pin_bar) and
+         higher_high and
+         higher_low and
+         tps_normalized >= min_tps_entry
+
+// ============================================
+// SECTION 9: AE EXIT CONDITIONS
+// ============================================
+
+// Dynamic Trailing Stop
+trailing_stop_level = highest(high, 10) * (1 - trailing_stop_pct / 100)
+
+// Market Structure Stop
+structure_break = close < support
+
+// ATR Stop
+atr_stop = close < (lowest(low, 10) - atr_val * 1.5)
+
+// Regime Change Stop
+regime_change = close < ema50 and close < ema200
+
+// Momentum Loss Stop
+momentum_loss = close < ema20 and rsi_val < 50
+
+// TPS-Based Exit
+tps_exit = tps_normalized <= max_tps_exit
+
+// AE Exit Conditions (Any one triggers)
+ae_sell = close < trailing_stop_level or 
+          structure_break or 
+          atr_stop or 
+          regime_change or 
+          momentum_loss or
+          tps_exit
+
+// ============================================
+// SECTION 10: EXECUTION
+// ============================================
+
+if (ae_buy)
+    entry_price = close
+    target1 = entry_price * (1 + tp1 / 100)
+    target2 = entry_price * (1 + tp2 / 100)
+    target3 = entry_price * (1 + tp3 / 100)
+    stop_loss = entry_price * (1 - stop_loss_pct / 100)
+    
+    strategy.entry("AE_Long", strategy.long, qty=strategy.equity * position_pct / 100 / close)
+    strategy.exit("AE_Stop", "AE_Long", stop=stop_loss)
+    strategy.exit("AE_TP1", "AE_Long", limit=target1, qty_percent=25)
+    strategy.exit("AE_TP2", "AE_Long", limit=target2, qty_percent=25)
+    strategy.exit("AE_TP3", "AE_Long", limit=target3, qty_percent=25)
+
+if (ae_sell)
+    strategy.close("AE_Long")
+
+// ============================================
+// SECTION 11: VISUAL SIGNALS
+// ============================================
+
+plotshape(ae_buy, style=shape.labelup, location=location.belowbar,
+     color=color.green, size=size.small, text="AE BUY", textcolor=color.white)
+
+plotshape(ae_sell, style=shape.labeldown, location=location.abovebar,
+     color=color.red, size=size.small, text="AE SELL", textcolor=color.white)
+
+bgcolor(ae_buy ? color.new(color.green, 10) : na)
+
+// ============================================
+// SECTION 12: LABELS (Entry, SL, TP)
+// ============================================
+
+if (ae_buy)
+    entry_price = close
+    target1 = entry_price * (1 + tp1 / 100)
+    target2 = entry_price * (1 + tp2 / 100)
+    target3 = entry_price * (1 + tp3 / 100)
+    stop_loss = entry_price * (1 - stop_loss_pct / 100)
+    
+    label.new(bar_index, entry_price, "Entry: " + str.tostring(entry_price, "#.##"), 
+         color=color.green, textcolor=color.white, style=label.style_labeldown, size=size.small)
+    label.new(bar_index, stop_loss, "SL: " + str.tostring(stop_loss, "#.##"), 
+         color=color.red, textcolor=color.white, style=label.style_labelup, size=size.small)
+    label.new(bar_index, target1, "TP1: " + str.tostring(target1, "#.##"), 
+         color=color.green, textcolor=color.white, style=label.style_labelup, size=size.small)
+    label.new(bar_index, target2, "TP2: " + str.tostring(target2, "#.##"), 
+         color=color.green, textcolor=color.white, style=label.style_labelup, size=size.small)
+    label.new(bar_index, target3, "TP3: " + str.tostring(target3, "#.##"), 
+         color=color.green, textcolor=color.white, style=label.style_labelup, size=size.small)
+
+// ============================================
+// SECTION 12.5: ZONE LABELS
+// ============================================
+
+if (show_zones and barstate.islast)
+    if (nearest_supply)
+        label.new(bar_index, nearest_supply, "🔴 SUPPLY", 
+             color=color.new(color.red, 60), textcolor=color.white, style=label.style_label_left, size=size.small)
+    if (nearest_demand)
+        label.new(bar_index, nearest_demand, "🟢 DEMAND", 
+             color=color.new(color.green, 60), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 12.6: VOLUME PROFILE LABELS (Item 12)
+// ============================================
+
+if (show_vp and barstate.islast)
+    label.new(bar_index, poc_price, "POC", 
+         color=color.new(color.yellow, 80), textcolor=color.white, style=label.style_label_left, size=size.small)
+    label.new(bar_index, vah_price, "VAH", 
+         color=color.new(color.orange, 80), textcolor=color.white, style=label.style_label_left, size=size.small)
+    label.new(bar_index, val_price, "VAL", 
+         color=color.new(color.orange, 80), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 13: PERFORMANCE DASHBOARD
+// ============================================
+
+if (barstate.islast)
+    label.new(bar_index, high * 1.08, 
+         "📊 AE STRATEGY V13.0.7\nTier: " + tier + "\nTPS: " + str.tostring(tps_normalized, "#") + "/100\n" +
+         "Trend: " + (close > ema20 ? "BULLISH" : "BEARISH") + "\nADX: " + str.tostring(adx_val, "#.##") + 
+         "\nVolume: " + (volume_spike ? "SPIKE" : "NORMAL") + "\nPos Size: " + str.tostring(position_pct, "#") + "%",
+         color=color.new(color.black, 80), textcolor=color.white, style=label.style_label_left, size=size.normal)
+
+// ============================================
+// SECTION 14: TIMEFRAME DISPLAY
+// ============================================
+
+if (barstate.islast)
+    chart_tf = timeframe.period
+    tf_warning = chart_tf != active_tf ? "⚠️ CHART TF MISMATCH" : "✅ TF ALIGNED"
+    tf_color = chart_tf == active_tf ? color.green : color.red
+    
+    label.new(bar_index, high * 1.15,
+         "⏱️ Active TF: " + active_tf + " | Tier: " + tier + "\n" + tf_warning,
+         color=color.new(tf_color, 60), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 15: TPS DISPLAY
+// ============================================
+
+if (barstate.islast)
+    tps_color = tps_normalized >= 82 ? color.green :
+                tps_normalized >= 70 ? color.yellow :
+                tps_normalized >= 50 ? color.orange : color.red
+    
+    tps_status = tps_normalized >= 82 ? "STRONG BUY" :
+                 tps_normalized >= 70 ? "HOLD" :
+                 tps_normalized >= 50 ? "MONITOR" : "EXIT"
+    
+    label.new(bar_index, high * 1.22,
+         "📊 TPS: " + str.tostring(tps_normalized, "#") + "/100\nStatus: " + tps_status,
+         color=color.new(tps_color, 60), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 15.5: ZONE DISPLAY
+// ============================================
+
+if (show_zones and barstate.islast)
+    label.new(bar_index, high * 1.28,
+         "📍 Zone: " + str.tostring(zone_score, "#.0") + "/10\n" + zone_status,
+         color=color.new(zone_color, 60), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 16: REGIME LABEL
+// ============================================
+
+if (barstate.islast)
+    regime_text = close > ema200 and close > ema50 ? "🟢 BULL" :
+                  close > ema200 and close < ema50 ? "🟡 ALT" :
+                  close < ema200 and close > ema50 ? "🟡 ACCUM" : "🔴 BEAR"
+    
+    label.new(bar_index, high * 1.32, regime_text, 
+         color=color.new(color.black, 80), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 17: WATERMARK
+// ============================================
+
+if (barstate.islast)
+    label.new(bar_index, low * 0.95, "AlphaEdge AE Strategy v13.0.7", 
+         color=color.new(color.white, 60), textcolor=color.white, style=label.style_label_left, size=size.small)
+
+// ============================================
+// SECTION 18: ALERTS
+// ============================================
+
+alertcondition(ae_buy, title="AE Buy Signal", 
+     message="AE BUY: TPS " + str.tostring(tps_normalized, "#") + "/100 | Entry Zone: $[price] | Tier: " + tier)
+
+alertcondition(ae_sell, title="AE Sell Signal", 
+     message="AE SELL: TPS " + str.tostring(tps_normalized, "#") + "/100 | Exit signal detected")
+
+alertcondition(tps_normalized >= 82, title="TPS ≥82 Detected", 
+     message="TPS ≥82 on [TOKEN]. Strong setup. Check entry conditions.")
+
+alertcondition(tps_normalized <= 68, title="TPS ≤68 Detected", 
+     message="TPS ≤68 on [TOKEN]. Consider exit.")
+
+// ============================================
+// SECTION 19: EQUITY CURVE
+// ============================================
+
+plot(strategy.equity, color=color.blue, linewidth=2, title="Equity")
+plot(strategy.equity / strategy.initial_capital, color=color.green, linewidth=1, title="Return %")
+
+// ============================================
+// SECTION 20: SUPPORT/RESISTANCE LINES
+// ============================================
+
+plot(resistance, color=color.red, linewidth=1, style=plot.style_circles, title="Resistance")
+plot(support, color=color.green, linewidth=1, style=plot.style_circles, title="Support")
+
+// ============================================
+// SECTION 21: VOLUME PROFILE LINES (Item 12)
+// ============================================
+
+plot(show_vp ? poc_price : na, color=color.yellow, linewidth=2, title="POC")
+plot(show_vp ? vah_price : na, color=color.orange, linewidth=1, title="VAH")
+plot(show_vp ? val_price : na, color=color.orange, linewidth=1, title="VAL")
