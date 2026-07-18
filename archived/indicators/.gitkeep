@@ -1,0 +1,23 @@
+# Archived Indicators
+
+This folder contains indicators that have been retired from active use.
+
+## Archive Policy
+- Indicators replaced by better versions
+- Indicators with duplicate functionality
+- Indicators with negative impact on performance
+
+## Archive Contents
+- Original code
+- Date archived
+- Reason for archiving
+- Replacement indicator (if applicable)
+
+## Format
+Each archived indicator should be saved as:
+`archived/indicators/[indicator_name]_v[X.X.X]_archived_[YYYY-MM-DD].py`
+
+## Change Log
+| Date | Indicator | Reason | Replacement |
+|------|-----------|--------|-------------|
+| 2026-07-18 | I-045 | Too noisy | AI_Volume_Filter |
