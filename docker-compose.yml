@@ -1,0 +1,77 @@
+# docker-compose.yml
+# AlphaEdge V13.0.7 – TimescaleDB Docker Setup
+# Item 16: TimescaleDB Integration
+
+version: '3.8'
+
+services:
+  # ============================================
+  # TIMESCALEDB DATABASE
+  # ============================================
+  timescaledb:
+    image: timescale/timescaledb:2.11.0-pg15
+    container_name: alphaedge_db
+    environment:
+      POSTGRES_USER: alphaedge
+      POSTGRES_PASSWORD: ${TIMESCALEDB_PASSWORD}
+      POSTGRES_DB: alphaedge
+      # Optional: Tune performance
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alphaedge -d alphaedge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alphaedge_network
+
+  # ============================================
+  # OPTIONAL: PGADMIN (For database management)
+  # ============================================
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: alphaedge_pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+  #   ports:
+  #     - "5050:80"
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   depends_on:
+  #     - timescaledb
+  #   networks:
+  #     - alphaedge_network
+  #   restart: unless-stopped
+
+  # ============================================
+  # OPTIONAL: REDIS FOR MESSAGE BUS (Item 20)
+  # ============================================
+  # redis:
+  #   image: redis:7.2-alpine
+  #   container_name: alphaedge_redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - alphaedge_network
+
+volumes:
+  timescaledb_data:
+    driver: local
+  # pgadmin_data:
+  #   driver: local
+  # redis_data:
+  #   driver: local
+
+networks:
+  alphaedge_network:
+    driver: bridge
