@@ -1,0 +1,22 @@
+# Archived Configurations
+
+This folder contains deprecated configuration files.
+
+## Archive Policy
+- Configurations replaced by newer versions
+- Parameters that were optimized away
+- Legacy settings no longer used
+
+## Archive Contents
+- Original config file
+- Date archived
+- Reason for archiving
+
+## Format
+Each archived config should be saved as:
+`archived/configs/[config_name]_v[X.X.X]_archived_[YYYY-MM-DD].yaml`
+
+## Change Log
+| Date | Config | Reason |
+|------|--------|--------|
+| 2026-07-18 | TPS 80/66 | Optimized to 82/68 |
